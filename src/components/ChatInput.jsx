@@ -1,9 +1,22 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SAMPLE_PROMPTS } from '../utils/helpers';
 import { FiSend, FiZap } from 'react-icons/fi';
 
 export default function ChatInput({ onSend, isLoading }) {
+  const { theme } = useSelector(s => s.chat);
+  const isLight = theme === 'light';
+  const panelBg = isLight ? '#f8fafc' : 'rgba(5,5,16,0.95)';
+  const panelBorder = isLight ? '#d6d6e0' : '#1a1a3a';
+  const cardBg = isLight ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.03)';
+  const textColor = isLight ? '#0f172a' : '#e8e8ff';
+  const mutedText = isLight ? '#475569' : '#6a6aaa';
+  const placeholderColor = isLight ? '#64748b' : '#3a3a6a';
+  const controlBg = isLight ? 'rgba(148,163,184,0.12)' : 'rgba(99,102,241,0.08)';
+  const controlBorder = isLight ? 'rgba(148,163,184,0.35)' : 'rgba(99,102,241,0.2)';
+  const buttonText = isLight ? '#1f2937' : '#6366f1';
+  const buttonDisabledColor = isLight ? '#94a3b8' : '#3a3a6a';
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -48,7 +61,7 @@ export default function ChatInput({ onSend, isLoading }) {
   };
 
   return (
-    <div style={{ padding: '16px 24px 24px', borderTop: '1px solid #1a1a3a', background: 'rgba(5,5,16,0.95)', backdropFilter: 'blur(20px)' }}>
+    <div style={{ padding: '16px 24px 24px', borderTop: `1px solid ${panelBorder}`, background: panelBg, backdropFilter: 'blur(20px)' }}>
       {/* Math symbol keyboard */}
       <AnimatePresence>
         {focused && (
@@ -95,10 +108,10 @@ export default function ChatInput({ onSend, isLoading }) {
             {SAMPLE_PROMPTS.slice(3).map((p, i) => (
               <button key={i} onClick={() => { setValue(p); setShowSuggestions(false); textareaRef.current?.focus(); }}
                 style={{
-                  padding: '6px 12px', background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20,
-                  color: '#6a6aaa', fontSize: 12, cursor: 'pointer',
-                  fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.2s',
+                  padding: '6px 12px', background: controlBg,
+                  border: `1px solid ${controlBorder}`, borderRadius: 20,
+                  color: mutedText, fontSize: 12, cursor: 'pointer',
+                  fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.2s', fontWeight: isLight ? 600 : 400,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; e.currentTarget.style.color = '#c7d2fe'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#6a6aaa'; }}
@@ -113,8 +126,8 @@ export default function ChatInput({ onSend, isLoading }) {
       {/* Input area */}
       <div style={{
         display: 'flex', gap: 12, alignItems: 'flex-end',
-        background: 'rgba(255,255,255,0.03)',
-        border: `1px solid ${focused ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.08)'}`,
+        background: cardBg,
+        border: `1px solid ${focused ? (isLight ? 'rgba(99,102,241,0.5)' : 'rgba(99,102,241,0.5)') : (isLight ? 'rgba(148,163,184,0.35)' : 'rgba(255,255,255,0.08)')}`,
         borderRadius: 16, padding: '12px 12px 12px 16px',
         transition: 'border-color 0.2s',
         boxShadow: focused ? '0 0 30px rgba(99,102,241,0.1)' : 'none',
@@ -130,9 +143,9 @@ export default function ChatInput({ onSend, isLoading }) {
           rows={1}
           style={{
             flex: 1, background: 'none', border: 'none', outline: 'none',
-            color: '#e8e8ff', fontSize: 14, lineHeight: 1.6, resize: 'none',
-            fontFamily: "'Syne', sans-serif", maxHeight: 160,
-            '::placeholder': { color: '#3a3a6a' },
+            color: textColor, fontSize: 14, lineHeight: 1.6, resize: 'none',
+            fontFamily: "'Syne', sans-serif", maxHeight: 160, fontWeight: isLight ? 600 : 400,
+            '::placeholder': { color: placeholderColor },
           }}
         />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
@@ -140,9 +153,9 @@ export default function ChatInput({ onSend, isLoading }) {
             onClick={() => { setShowSuggestions(!showSuggestions); setFocused(true); textareaRef.current?.focus(); }}
             style={{
               width: 32, height: 32, borderRadius: 8,
-              background: 'rgba(99,102,241,0.08)',
-              border: '1px solid rgba(99,102,241,0.2)',
-              color: '#6366f1', cursor: 'pointer',
+              background: controlBg,
+              border: `1px solid ${controlBorder}`,
+              color: buttonText, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s',
             }}
@@ -164,7 +177,7 @@ export default function ChatInput({ onSend, isLoading }) {
                 : 'rgba(255,255,255,0.05)',
               border: 'none', cursor: value.trim() && !isLoading ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: value.trim() && !isLoading ? '#fff' : '#3a3a6a',
+              color: value.trim() && !isLoading ? '#fff' : buttonDisabledColor,
               transition: 'all 0.2s',
               boxShadow: value.trim() && !isLoading ? '0 4px 16px rgba(99,102,241,0.4)' : 'none',
             }}
@@ -181,7 +194,7 @@ export default function ChatInput({ onSend, isLoading }) {
           </motion.button>
         </div>
       </div>
-      <div style={{ marginTop: 8, textAlign: 'center', fontSize: 11, color: '#2a2a4a', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ marginTop: 8, textAlign: 'center', fontSize: 11, color: mutedText, fontFamily: "'JetBrains Mono', monospace", fontWeight: isLight ? 600 : 400 }}>
         MathBot can solve equations, proofs, calculus, statistics, linear algebra & more
       </div>
     </div>

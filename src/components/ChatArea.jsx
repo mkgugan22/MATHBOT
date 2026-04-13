@@ -12,7 +12,14 @@ import { FiMenu, FiPlus, FiLogOut } from 'react-icons/fi';
 export default function ChatArea({ user, onLogout }) {
   const dispatch = useDispatch();
   const { sendMessage, isLoading, activeSession } = useMathBot();
-  const { sidebarOpen, activeSessionId } = useSelector(s => s.chat);
+  const { sidebarOpen, activeSessionId, theme } = useSelector(s => s.chat);
+  const isLight = theme === 'light';
+  const surfaceBg = isLight ? 'rgba(255,255,255,0.96)' : 'rgba(5,5,16,0.8)';
+  const borderColor = isLight ? '#d6d6e0' : '#1a1a3a';
+  const textColor = isLight ? '#0f172a' : '#fff';
+  const mutedText = isLight ? '#475569' : '#6a6aaa';
+  const buttonText = isLight ? '#1f2937' : '#a5b4fc';
+  const buttonBg = isLight ? 'rgba(99,102,241,0.08)' : 'rgba(99,102,241,0.1)';
   const messagesEndRef = useRef(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -52,14 +59,14 @@ export default function ChatArea({ user, onLogout }) {
 
       {/* Header */}
       <div style={{
-        padding: '12px 16px', borderBottom: '1px solid #1a1a3a',
+        padding: '12px 16px', borderBottom: `1px solid ${borderColor}`,
         display: 'flex', alignItems: 'center', gap: 10,
-        background: 'rgba(5,5,16,0.8)', backdropFilter: 'blur(20px)', zIndex: 5, flexShrink: 0,
+        background: surfaceBg, backdropFilter: 'blur(20px)', zIndex: 5, flexShrink: 0,
       }}>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={() => dispatch(toggleSidebar())}
           style={{
-            background: 'none', border: '1px solid #1a1a3a', color: '#6a6aaa',
+            background: 'none', border: `1px solid ${borderColor}`, color: mutedText,
             cursor: 'pointer', padding: 8, borderRadius: 8,
             display: 'flex', alignItems: 'center', transition: 'all 0.2s', flexShrink: 0,
           }}
@@ -76,22 +83,22 @@ export default function ChatArea({ user, onLogout }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 14, boxShadow: '0 0 12px rgba(99,102,241,0.4)',
             }}>∑</div>
-            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: '#fff' }} className="hide-on-mobile">MathBot</span>
+            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: textColor, fontWeight: isLight ? 700 : 400 }} className="hide-on-mobile">MathBot</span>
           </div>
         )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           {activeSession && (
-            <div style={{ fontSize: 12, color: '#6a6aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 12, color: mutedText, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isLight ? 600 : 400 }}>
               {activeSession.title}
             </div>
           )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20 }}>
+          <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: isLight ? 'rgba(226,232,240,0.8)' : 'rgba(99,102,241,0.08)', border: `1px solid ${isLight ? 'rgba(148,163,184,0.4)' : 'rgba(99,102,241,0.2)'}`, borderRadius: 20 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: isLoading ? '#f59e0b' : '#10b981', boxShadow: isLoading ? '0 0 6px #f59e0b' : '0 0 6px #10b981', transition: 'all 0.3s' }} />
-            <span style={{ fontSize: 11, color: isLoading ? '#f59e0b' : '#6a6aaa', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span style={{ fontSize: 11, color: isLoading ? '#f59e0b' : mutedText, fontFamily: "'JetBrains Mono', monospace", fontWeight: isLight ? 600 : 400 }}>
               {isLoading ? 'Computing…' : 'Mistral Agent'}
             </span>
           </div>
@@ -100,8 +107,8 @@ export default function ChatArea({ user, onLogout }) {
             onClick={() => dispatch(createSession())}
             style={{
               padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 4,
-              background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)',
-              borderRadius: 8, color: '#a5b4fc', cursor: 'pointer',
+              background: buttonBg, border: `1px solid ${isLight ? 'rgba(99,102,241,0.25)' : 'rgba(99,102,241,0.25)'}`,
+              borderRadius: 8, color: buttonText, cursor: 'pointer',
               fontSize: 12, fontFamily: "'Syne', sans-serif", transition: 'all 0.2s',
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.2)'}
@@ -141,7 +148,7 @@ export default function ChatArea({ user, onLogout }) {
                     }}>{user.avatar}</div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#e8e8ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{user.name}</div>
-                      <div style={{ fontSize: 11, color: '#6a6aaa', fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{user.email}</div>
+                      <div style={{ fontSize: 11, color: mutedText, fontFamily: "'JetBrains Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{user.email}</div>
                     </div>
                   </div>
                   <div style={{ height: 1, background: '#1a1a3a', margin: '4px 0' }} />

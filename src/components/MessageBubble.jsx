@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -14,6 +15,8 @@ import {
 
 // Animated typing indicator — shown while waiting for API response
 function TypingIndicator() {
+  const { theme } = useSelector(s => s.chat);
+  const isLight = theme === 'light';
   return (
     <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '4px 2px' }}>
       {[0, 1, 2].map(i => (
@@ -28,7 +31,7 @@ function TypingIndicator() {
           }}
         />
       ))}
-      <span style={{ marginLeft: 8, fontSize: 12, color: '#4a4a8a', fontFamily: "'JetBrains Mono', monospace" }}>
+      <span style={{ marginLeft: 8, fontSize: 12, color: isLight ? '#475569' : '#4a4a8a', fontFamily: "'JetBrains Mono', monospace", fontWeight: isLight ? 600 : 400 }}>
         Computing...
       </span>
     </div>
@@ -37,6 +40,12 @@ function TypingIndicator() {
 
 // onShare is called with the full message object so ChatArea can open the ShareModal
 function MessageActions({ message, sessionId, onShare }) {
+  const { theme } = useSelector(s => s.chat);
+  const isLight = theme === 'light';
+  const actionText = isLight ? '#0f172a' : '#6a6aaa';
+  const actionBg = isLight ? 'rgba(148,163,184,0.12)' : 'rgba(255,255,255,0.04)';
+  const activeBg = isLight ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.2)';
+  const activeBorder = isLight ? 'rgba(99,102,241,0.45)' : 'rgba(99,102,241,0.5)';
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
 
@@ -91,15 +100,15 @@ function MessageActions({ message, sessionId, onShare }) {
           onClick={action}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            background: active ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.04)',
-            border: `1px solid ${active ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.08)'}`,
-            color: active ? '#c7d2fe' : '#6a6aaa',
+            background: active ? activeBg : actionBg,
+            border: `1px solid ${active ? activeBorder : (isLight ? 'rgba(148,163,184,0.35)' : 'rgba(255,255,255,0.08)')}`,
+            color: active ? '#102a43' : actionText,
             borderRadius: 8, padding: '5px 10px',
             fontSize: 11, cursor: 'pointer', fontFamily: "'Syne', sans-serif",
-            transition: 'all 0.2s',
+            transition: 'all 0.2s', fontWeight: isLight ? 600 : 400,
           }}
-          onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; e.currentTarget.style.color = '#c7d2fe'; } }}
-          onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#6a6aaa'; } }}
+          onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = isLight ? 'rgba(99,102,241,0.4)' : 'rgba(99,102,241,0.4)'; e.currentTarget.style.color = '#0f172a'; } }}
+          onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = isLight ? 'rgba(148,163,184,0.35)' : 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = actionText; } }}
         >
           {icon} {label}
         </motion.button>
@@ -108,7 +117,7 @@ function MessageActions({ message, sessionId, onShare }) {
   );
 }
 
-const markdownComponents = {
+const getMarkdownComponents = (isLight) => ({
   code({ node, inline, className, children, ...props }) {
     const match = /language-(\w+)/.exec(className || '');
     return !inline ? (
@@ -119,7 +128,7 @@ const markdownComponents = {
           PreTag="div"
           customStyle={{
             borderRadius: 10, fontSize: 13,
-            background: '#0a0a1e', border: '1px solid #1a1a3a',
+            background: isLight ? '#f8fafc' : '#0a0a1e', border: `1px solid ${isLight ? '#cbd5e1' : '#1a1a3a'}`,
             padding: '16px',
           }}
           {...props}
@@ -129,40 +138,44 @@ const markdownComponents = {
       </div>
     ) : (
       <code style={{
-        background: 'rgba(99,102,241,0.15)', color: '#a5b4fc',
+        background: isLight ? 'rgba(148,163,184,0.15)' : 'rgba(99,102,241,0.15)', color: isLight ? '#0f172a' : '#a5b4fc',
         padding: '2px 6px', borderRadius: 4, fontSize: '0.9em',
         fontFamily: "'JetBrains Mono', monospace",
       }}>{children}</code>
     );
   },
-  h1: ({ children }) => <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 22, color: '#e8e8ff', marginBottom: 12, marginTop: 20, borderBottom: '1px solid #1a1a3a', paddingBottom: 8 }}>{children}</h1>,
-  h2: ({ children }) => <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: '#c7d2fe', marginBottom: 10, marginTop: 18 }}>{children}</h2>,
-  h3: ({ children }) => <h3 style={{ fontSize: 15, color: '#a5b4fc', marginBottom: 8, marginTop: 14, fontWeight: 600 }}>{children}</h3>,
-  p: ({ children }) => <p style={{ lineHeight: 1.75, marginBottom: 12, color: '#c8c8e8', fontSize: 14 }}>{children}</p>,
-  ul: ({ children }) => <ul style={{ marginLeft: 20, marginBottom: 12, color: '#c8c8e8', fontSize: 14 }}>{children}</ul>,
-  ol: ({ children }) => <ol style={{ marginLeft: 20, marginBottom: 12, color: '#c8c8e8', fontSize: 14 }}>{children}</ol>,
+  h1: ({ children }) => <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 22, color: isLight ? '#0f172a' : '#e8e8ff', marginBottom: 12, marginTop: 20, borderBottom: `1px solid ${isLight ? '#cbd5e1' : '#1a1a3a'}`, paddingBottom: 8 }}>{children}</h1>,
+  h2: ({ children }) => <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 18, color: isLight ? '#3730a3' : '#c7d2fe', marginBottom: 10, marginTop: 18 }}>{children}</h2>,
+  h3: ({ children }) => <h3 style={{ fontSize: 15, color: isLight ? '#4338ca' : '#a5b4fc', marginBottom: 8, marginTop: 14, fontWeight: 600 }}>{children}</h3>,
+  p: ({ children }) => <p style={{ lineHeight: 1.75, marginBottom: 12, color: isLight ? '#0f172a' : '#c8c8e8', fontSize: 14 }}>{children}</p>,
+  ul: ({ children }) => <ul style={{ marginLeft: 20, marginBottom: 12, color: isLight ? '#0f172a' : '#c8c8e8', fontSize: 14 }}>{children}</ul>,
+  ol: ({ children }) => <ol style={{ marginLeft: 20, marginBottom: 12, color: isLight ? '#0f172a' : '#c8c8e8', fontSize: 14 }}>{children}</ol>,
   li: ({ children }) => <li style={{ marginBottom: 6, lineHeight: 1.6 }}>{children}</li>,
   blockquote: ({ children }) => (
     <blockquote style={{
       borderLeft: '3px solid #6366f1', paddingLeft: 16,
-      margin: '12px 0', color: '#9898c8', fontStyle: 'italic',
-      background: 'rgba(99,102,241,0.05)', borderRadius: '0 8px 8px 0', padding: '12px 16px',
+      margin: '12px 0', color: isLight ? '#475569' : '#9898c8', fontStyle: 'italic',
+      background: isLight ? 'rgba(199,210,254,0.18)' : 'rgba(99,102,241,0.05)', borderRadius: '0 8px 8px 0', padding: '12px 16px',
     }}>{children}</blockquote>
   ),
   table: ({ children }) => (
     <div style={{ overflowX: 'auto', margin: '12px 0' }}>
-      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>{children}</table>
+      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13, background: isLight ? '#f8fafc' : undefined }}>{children}</table>
     </div>
   ),
-  th: ({ children }) => <th style={{ padding: '8px 12px', background: 'rgba(99,102,241,0.2)', color: '#c7d2fe', textAlign: 'left', borderBottom: '1px solid #1a1a3a' }}>{children}</th>,
-  td: ({ children }) => <td style={{ padding: '8px 12px', borderBottom: '1px solid #111130', color: '#c8c8e8' }}>{children}</td>,
-  strong: ({ children }) => <strong style={{ color: '#e0e0ff', fontWeight: 700 }}>{children}</strong>,
-  em: ({ children }) => <em style={{ color: '#a5b4fc' }}>{children}</em>,
-  hr: () => <hr style={{ border: 'none', borderTop: '1px solid #1a1a3a', margin: '16px 0' }} />,
-};
+  th: ({ children }) => <th style={{ padding: '8px 12px', background: isLight ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.2)', color: isLight ? '#1d4ed8' : '#c7d2fe', textAlign: 'left', borderBottom: `1px solid ${isLight ? '#cbd5e1' : '#1a1a3a'}` }}>{children}</th>,
+  td: ({ children }) => <td style={{ padding: '8px 12px', borderBottom: `1px solid ${isLight ? '#e2e8f0' : '#111130'}`, color: isLight ? '#334155' : '#c8c8e8' }}>{children}</td>,
+  strong: ({ children }) => <strong style={{ color: isLight ? '#0f172a' : '#e0e0ff', fontWeight: 700 }}>{children}</strong>,
+  em: ({ children }) => <em style={{ color: isLight ? '#4338ca' : '#a5b4fc' }}>{children}</em>,
+  hr: () => <hr style={{ border: 'none', borderTop: `1px solid ${isLight ? '#e2e8f0' : '#1a1a3a'}`, margin: '16px 0' }} />,
+});
 
 // onShare prop is passed down from ChatArea
 export default function MessageBubble({ message, sessionId, onShare }) {
+  const { theme } = useSelector(s => s.chat);
+  const isLight = theme === 'light';
+  const textColor = isLight ? '#0f172a' : '#e8e8ff';
+  const mutedTime = isLight ? '#475569' : '#3a3a6a';
   const isUser = message.role === 'user';
   const isLoading = message.isLoading;
 
@@ -199,10 +212,10 @@ export default function MessageBubble({ message, sessionId, onShare }) {
         maxWidth: '75%',
         background: isUser
           ? 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15))'
-          : 'rgba(255,255,255,0.03)',
+          : isLight ? 'rgba(248,250,252,0.95)' : 'rgba(255,255,255,0.03)',
         border: isUser
           ? '1px solid rgba(99,102,241,0.3)'
-          : '1px solid rgba(255,255,255,0.06)',
+          : isLight ? '1px solid rgba(148,163,184,0.4)' : '1px solid rgba(255,255,255,0.06)',
         borderRadius: isUser ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
         padding: '14px 18px',
         backdropFilter: 'blur(10px)',
@@ -210,13 +223,13 @@ export default function MessageBubble({ message, sessionId, onShare }) {
         {isLoading ? (
           <TypingIndicator />
         ) : isUser ? (
-          <p style={{ color: '#e8e8ff', fontSize: 14, lineHeight: 1.7, margin: 0 }}>{message.content}</p>
+          <p style={{ color: textColor, fontSize: 14, lineHeight: 1.7, margin: 0, fontWeight: isLight ? 600 : 400 }}>{message.content}</p>
         ) : (
           <>
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
-              components={markdownComponents}
+              components={getMarkdownComponents(isLight)}
             >
               {message.content}
             </ReactMarkdown>
@@ -225,7 +238,7 @@ export default function MessageBubble({ message, sessionId, onShare }) {
           </>
         )}
         {!isLoading && (
-          <div style={{ marginTop: 8, fontSize: 10, color: '#3a3a6a', fontFamily: "'JetBrains Mono', monospace", textAlign: isUser ? 'left' : 'right' }}>
+          <div style={{ marginTop: 8, fontSize: 10, color: mutedTime, fontFamily: "'JetBrains Mono', monospace", textAlign: isUser ? 'left' : 'right', fontWeight: isLight ? 600 : 400 }}>
             {formatTimestamp(message.timestamp)}
           </div>
         )}
