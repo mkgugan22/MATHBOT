@@ -5,13 +5,7 @@ import {
   removeLoadingMessage, setLoading, setError, createSession,
 } from '../store/chatSlice';
 
-const AGENT_ID = 'ag_019d5c3e69a570f68a5fccb0c2ba05eb';
-const MISTRAL_API_KEY = '0Nx0JljcemlgN8ptyELMx9nKBmLvELO9';
-const BASE_URL = 'https://api.mistral.ai/v1/conversations';
-
-const PROXY_URL = process.env.NODE_ENV === 'production'
-  ? '/api/mistral-proxy'
-  : null;
+const PROXY_URL = 'http://localhost:3002/api/mistral-proxy';
 
 export function useMathBot() {
   const dispatch = useDispatch();
@@ -38,49 +32,17 @@ export function useMathBot() {
     dispatch(setError(null));
 
     try {
-      // ✅ CRITICAL FIX: Read conversationId from store.getState() at call time,
-      // NOT from the React hook closure (which is always stale after first message).
       const freshState = store.getState().chat;
       const freshSession = freshState.sessions.find(s => s.id === sessionId);
       const conversationId = freshSession?.conversationId || null;
 
       console.log('[MathBot] sessionId:', sessionId, '| conversationId:', conversationId);
 
-      let response;
-
-      if (PROXY_URL) {
-        response = await fetch(PROXY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content, conversationId }),
-        });
-      } else if (conversationId) {
-        // Continue existing Mistral conversation
-        response = await fetch(`${BASE_URL}/${conversationId}/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${MISTRAL_API_KEY}`,
-          },
-          body: JSON.stringify({
-            inputs: [{ role: 'user', content }],
-          }),
-        });
-      } else {
-        // Start a brand new conversation
-        response = await fetch(BASE_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${MISTRAL_API_KEY}`,
-          },
-          body: JSON.stringify({
-            agent_id: AGENT_ID,
-            agent_version: 1,
-            inputs: [{ role: 'user', content }],
-          }),
-        });
-      }
+      const response = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, conversationId }),
+      });
 
       const data = await response.json();
 
