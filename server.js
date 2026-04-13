@@ -6,6 +6,7 @@ app.use(cors());
 app.use(express.json());
 
 const AGENT_ID = 'ag_019d5c3e69a570f68a5fccb0c2ba05eb';
+const AGENT_VERSION = 2;
 const MISTRAL_API_KEY = '0Nx0JljcemlgN8ptyELMx9nKBmLvELO9';
 const BASE_URL = 'https://api.mistral.ai/v1/conversations';
 
@@ -33,7 +34,7 @@ app.post('/api/mistral-proxy', async (req, res) => {
     // Start a brand new conversation
     requestBody = {
       agent_id: AGENT_ID,
-      agent_version: 1,
+      agent_version: AGENT_VERSION,
       inputs: [{ role: 'user', content }],
     };
   }
@@ -75,7 +76,7 @@ app.post('/api/mistral-proxy', async (req, res) => {
           },
           body: JSON.stringify({
             agent_id: AGENT_ID,
-            agent_version: 1,
+            agent_version: AGENT_VERSION,
             inputs: [{ role: 'user', content }],
           }),
         });

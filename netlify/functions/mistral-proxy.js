@@ -1,4 +1,5 @@
 const AGENT_ID = 'ag_019d5c3e69a570f68a5fccb0c2ba05eb';
+const AGENT_VERSION = 2;
 const BASE_URL = 'https://api.mistral.ai/v1/conversations';
 
 const CORS_HEADERS = {
@@ -63,7 +64,7 @@ exports.handler = async (event) => {
     url = BASE_URL;
     requestBody = {
       agent_id: AGENT_ID,
-      agent_version: 1,
+      agent_version: AGENT_VERSION,
       inputs: [{ role: 'user', content }],
     };
   }
@@ -103,7 +104,7 @@ exports.handler = async (event) => {
           },
           body: JSON.stringify({
             agent_id: AGENT_ID,
-            agent_version: 1,
+            agent_version: AGENT_VERSION,
             inputs: [{ role: 'user', content }],
           }),
         });
