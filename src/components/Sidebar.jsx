@@ -3,25 +3,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   createSession, setActiveSession, deleteSession,
-  toggleSidebar, clearAllSessions, renameSession,
+  toggleSidebar, clearAllSessions, renameSession, setTheme,
 } from '../store/chatSlice';
 import { formatTimestamp } from '../utils/helpers';
 import {
   FiPlus, FiTrash2, FiEdit3, FiCheck, FiX,
-  FiChevronLeft, FiMessageSquare, FiZap,
+  FiChevronLeft, FiMessageSquare, FiZap, FiSun, FiMoon,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-export default function Sidebar() {
+export default function Sidebar({ onThemeChange }) {
   const dispatch = useDispatch();
-  const { sessions, activeSessionId, sidebarOpen } = useSelector(s => s.chat);
+  const { sessions, activeSessionId, sidebarOpen, theme } = useSelector(s => s.chat);
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
   const [hoveredId, setHoveredId] = useState(null);
 
-  const handleNew = () => {
-    dispatch(createSession());
-  };
+  const handleNew = () => dispatch(createSession());
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
@@ -168,7 +166,7 @@ export default function Sidebar() {
                             {formatTimestamp(session.updatedAt)}
                           </span>
                           <span style={{ fontSize: 10, color: '#3a3a6a' }}>
-                            {session.messages.length} msg{session.messages.length !== 1 ? 's' : ''}
+                            {session.messages.filter(m => !m.isLoading).length} msg{session.messages.filter(m => !m.isLoading).length !== 1 ? 's' : ''}
                           </span>
                         </div>
                       </>
@@ -181,6 +179,31 @@ export default function Sidebar() {
 
           {/* Footer */}
           <div style={{ padding: '12px 20px', borderTop: '1px solid #1a1a3a' }}>
+            {/* Theme Toggle */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              {[
+                { label: 'Dark', value: 'dark', icon: <FiMoon size={12} /> },
+                { label: 'Light', value: 'light', icon: <FiSun size={12} /> },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { dispatch(setTheme(opt.value)); onThemeChange && onThemeChange(opt.value); }}
+                  style={{
+                    flex: 1, padding: '8px 0', borderRadius: 8,
+                    background: theme === opt.value ? 'rgba(99,102,241,0.2)' : 'transparent',
+                    border: `1px solid ${theme === opt.value ? 'rgba(99,102,241,0.5)' : '#2a2a4a'}`,
+                    color: theme === opt.value ? '#c7d2fe' : '#4a4a7a',
+                    cursor: 'pointer', fontSize: 12,
+                    fontFamily: "'Syne', sans-serif",
+                    display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {opt.icon} {opt.label}
+                </button>
+              ))}
+            </div>
+
             {sessions.length > 0 && (
               <button onClick={() => { dispatch(clearAllSessions()); toast.success('All chats cleared'); }}
                 style={{ width: '100%', background: 'none', border: '1px solid #2a2a4a', color: '#4a4a7a', borderRadius: 8, padding: '8px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', fontFamily: "'Syne', sans-serif", transition: 'all 0.2s' }}
@@ -189,7 +212,7 @@ export default function Sidebar() {
                 <FiTrash2 size={12} /> Clear All Chats
               </button>
             )}
-            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, color: '#2a2a5a', fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, color: '#2a2a5a', fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
               <FiZap size={10} /> Powered by Mistral AI Agent
             </div>
           </div>

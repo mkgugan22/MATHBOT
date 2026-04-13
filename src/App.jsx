@@ -1,25 +1,36 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
-import { createSession } from './store/chatSlice';
+import { createSession, setTheme } from './store/chatSlice';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 
 function AppContent() {
   const dispatch = useDispatch();
-  const { sessions, activeSessionId } = useSelector(s => s.chat);
+  const { sessions, theme } = useSelector(s => s.chat);
 
+  // Create initial session on first load
   useEffect(() => {
     if (sessions.length === 0) {
       dispatch(createSession());
     }
   }, []);
 
+  // Apply theme class to body
+  useEffect(() => {
+    document.body.classList.toggle('mathbot-light', theme === 'light');
+    document.body.classList.toggle('mathbot-dark', theme !== 'light');
+  }, [theme]);
+
+  const handleToggleTheme = useCallback((value) => {
+    dispatch(setTheme(value));
+  }, [dispatch]);
+
   return (
     <div style={{
       height: '100vh', display: 'flex', overflow: 'hidden',
-      background: '#050510',
+      background: theme === 'light' ? '#f0f0ff' : '#050510',
       position: 'relative',
     }}>
       {/* Grid overlay */}
@@ -33,7 +44,7 @@ function AppContent() {
       }} />
 
       <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative', zIndex: 1 }}>
-        <Sidebar />
+        <Sidebar onThemeChange={handleToggleTheme} />
         <ChatArea />
       </div>
 

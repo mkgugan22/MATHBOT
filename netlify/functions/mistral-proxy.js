@@ -43,15 +43,17 @@ exports.handler = async (event) => {
   let requestBody;
 
   if (conversationId) {
+    // Continue existing Mistral conversation
     url = `${BASE_URL}/${conversationId}/messages`;
     requestBody = {
       inputs: [{ role: 'user', content }],
     };
   } else {
+    // Start new conversation — agent_version MUST be 1
     url = BASE_URL;
     requestBody = {
       agent_id: AGENT_ID,
-      agent_version: 0,
+      agent_version: 1,
       inputs: [{ role: 'user', content }],
     };
   }

@@ -4,10 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useMathBot } from '../hooks/useMathBot';
 import { toggleSidebar, createSession } from '../store/chatSlice';
 import MessageBubble from './MessageBubble';
-import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
 import ChatInput from './ChatInput';
-import { FiMenu, FiPlus, FiCpu } from 'react-icons/fi';
+import { FiMenu, FiPlus } from 'react-icons/fi';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
@@ -20,17 +19,17 @@ export default function ChatArea() {
   }, [activeSession?.messages, isLoading]);
 
   const handleSend = useCallback(async (content) => {
+    if (!content.trim()) return;
     if (!activeSessionId) {
       dispatch(createSession());
-      // Give Redux time to update, then send
-      setTimeout(() => sendMessage(content), 50);
+      setTimeout(() => sendMessage(content), 80);
     } else {
       sendMessage(content);
     }
   }, [activeSessionId, dispatch, sendMessage]);
 
   const messages = activeSession?.messages || [];
-  const isEmpty = messages.length === 0;
+  const isEmpty = messages.filter(m => !m.isLoading).length === 0 && !isLoading;
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
@@ -88,8 +87,10 @@ export default function ChatArea() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-            <span style={{ fontSize: 11, color: '#6a6aaa', fontFamily: "'JetBrains Mono', monospace" }}>Mistral Agent</span>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: isLoading ? '#f59e0b' : '#10b981', boxShadow: isLoading ? '0 0 6px #f59e0b' : '0 0 6px #10b981', transition: 'all 0.3s' }} />
+            <span style={{ fontSize: 11, color: isLoading ? '#f59e0b' : '#6a6aaa', fontFamily: "'JetBrains Mono', monospace" }}>
+              {isLoading ? 'Computing…' : 'Mistral Agent'}
+            </span>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -121,7 +122,6 @@ export default function ChatArea() {
                 <MessageBubble key={msg.id} message={msg} sessionId={activeSession?.id} />
               ))}
             </AnimatePresence>
-            {isLoading && <TypingIndicator />}
             <div ref={messagesEndRef} />
           </>
         )}

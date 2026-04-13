@@ -8,18 +8,36 @@ import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { copyToClipboard, generateShareLink, formatTimestamp } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import {
-  FiCopy, FiShare2, FiCheck, FiUser, FiCpu,
-  FiDownload, FiBookmark,
+  FiCopy, FiShare2, FiCheck, FiUser,
+  FiDownload, FiBookmark, FiThumbsUp,
 } from 'react-icons/fi';
 
-const MathIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <text x="2" y="18" fontSize="18" fontFamily="serif">∑</text>
-  </svg>
-);
+// Animated typing indicator — shown while waiting for API response
+function TypingIndicator() {
+  return (
+    <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '4px 2px' }}>
+      {[0, 1, 2].map(i => (
+        <motion.div
+          key={i}
+          animate={{ y: [0, -8, 0], opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+          style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            boxShadow: '0 0 8px rgba(99,102,241,0.6)',
+          }}
+        />
+      ))}
+      <span style={{ marginLeft: 8, fontSize: 12, color: '#4a4a8a', fontFamily: "'JetBrains Mono', monospace" }}>
+        Computing...
+      </span>
+    </div>
+  );
+}
 
 function MessageActions({ message, sessionId }) {
   const [copied, setCopied] = useState(false);
+  const [liked, setLiked] = useState(false);
 
   const handleCopy = async () => {
     await copyToClipboard(message.content);
@@ -46,22 +64,27 @@ function MessageActions({ message, sessionId }) {
   };
 
   const handleSave = () => {
-    const saved = JSON.parse(localStorage.getItem('mathbot_saved') || '[]');
-    saved.push({ id: message.id, content: message.content, savedAt: new Date().toISOString() });
-    localStorage.setItem('mathbot_saved', JSON.stringify(saved));
-    toast.success('Saved to bookmarks!', { icon: '🔖' });
+    try {
+      const saved = JSON.parse(localStorage.getItem('mathbot_saved') || '[]');
+      saved.push({ id: message.id, content: message.content, savedAt: new Date().toISOString() });
+      localStorage.setItem('mathbot_saved', JSON.stringify(saved));
+      toast.success('Saved to bookmarks!', { icon: '🔖' });
+    } catch {
+      toast.error('Could not save.');
+    }
   };
 
   const btns = [
-    { icon: copied ? <FiCheck /> : <FiCopy />, label: copied ? 'Copied!' : 'Copy', action: handleCopy },
+    { icon: copied ? <FiCheck /> : <FiCopy />, label: copied ? 'Copied!' : 'Copy', action: handleCopy, active: copied },
     { icon: <FiShare2 />, label: 'Share Link', action: handleShare },
     { icon: <FiDownload />, label: 'Download', action: handleDownload },
+    { icon: <FiThumbsUp />, label: liked ? 'Liked!' : 'Like', action: () => setLiked(!liked), active: liked },
     { icon: <FiBookmark />, label: 'Save', action: handleSave },
   ];
 
   return (
     <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-      {btns.map(({ icon, label, action }) => (
+      {btns.map(({ icon, label, action, active }) => (
         <motion.button
           key={label}
           whileHover={{ scale: 1.05, y: -1 }}
@@ -69,14 +92,15 @@ function MessageActions({ message, sessionId }) {
           onClick={action}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: '#6a6aaa', borderRadius: 8, padding: '5px 10px',
+            background: active ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${active ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.08)'}`,
+            color: active ? '#c7d2fe' : '#6a6aaa',
+            borderRadius: 8, padding: '5px 10px',
             fontSize: 11, cursor: 'pointer', fontFamily: "'Syne', sans-serif",
             transition: 'all 0.2s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; e.currentTarget.style.color = '#c7d2fe'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#6a6aaa'; }}
+          onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(99,102,241,0.4)'; e.currentTarget.style.color = '#c7d2fe'; } }}
+          onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#6a6aaa'; } }}
         >
           {icon} {label}
         </motion.button>
@@ -140,6 +164,7 @@ const markdownComponents = {
 
 export default function MessageBubble({ message, sessionId }) {
   const isUser = message.role === 'user';
+  const isLoading = message.isLoading;
 
   return (
     <motion.div
@@ -182,7 +207,9 @@ export default function MessageBubble({ message, sessionId }) {
         padding: '14px 18px',
         backdropFilter: 'blur(10px)',
       }}>
-        {isUser ? (
+        {isLoading ? (
+          <TypingIndicator />
+        ) : isUser ? (
           <p style={{ color: '#e8e8ff', fontSize: 14, lineHeight: 1.7, margin: 0 }}>{message.content}</p>
         ) : (
           <>
@@ -196,9 +223,11 @@ export default function MessageBubble({ message, sessionId }) {
             <MessageActions message={message} sessionId={sessionId} />
           </>
         )}
-        <div style={{ marginTop: 8, fontSize: 10, color: '#3a3a6a', fontFamily: "'JetBrains Mono', monospace", textAlign: isUser ? 'left' : 'right' }}>
-          {formatTimestamp(message.timestamp)}
-        </div>
+        {!isLoading && (
+          <div style={{ marginTop: 8, fontSize: 10, color: '#3a3a6a', fontFamily: "'JetBrains Mono', monospace", textAlign: isUser ? 'left' : 'right' }}>
+            {formatTimestamp(message.timestamp)}
+          </div>
+        )}
       </div>
     </motion.div>
   );
