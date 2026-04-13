@@ -5,7 +5,7 @@ import {
   removeLoadingMessage, setLoading, setError, createSession,
 } from '../store/chatSlice';
 
-const PROXY_URL = 'http://localhost:3002/api/mistral-proxy';
+const PROXY_URL = '/api/mistral-proxy';
 
 export function useMathBot() {
   const dispatch = useDispatch();
