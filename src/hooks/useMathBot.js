@@ -5,7 +5,10 @@ import {
   removeLoadingMessage, setLoading, setError, createSession,
 } from '../store/chatSlice';
 
-const PROXY_URL = '/api/mistral-proxy';
+const PROXY_URL = (() => {
+  const isNetlifyHost = typeof window !== 'undefined' && window.location.hostname.endsWith('.netlify.app');
+  return isNetlifyHost ? '/.netlify/functions/mistral-proxy' : '/api/mistral-proxy';
+})();
 
 export function useMathBot() {
   const dispatch = useDispatch();
