@@ -2,15 +2,30 @@ import React, { useEffect, useCallback } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
-import { createSession, setTheme } from './store/chatSlice';
+import { createSession, setTheme, clearAllSessions } from './store/chatSlice';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
+import AuthPage from './components/AuthPage';
+import { useAuth } from './components/AuthContext';
 
 function AppContent() {
   const dispatch = useDispatch();
   const { sessions, theme } = useSelector(s => s.chat);
+  const { user, logout } = useAuth();
 
-  // Create initial session on first load
+  // Reset sessions when user changes
+  useEffect(() => {
+    if (!user) return;
+    // Load user-specific sessions from localStorage
+    const key = `mathbot_sessions_${user.id}`;
+    const saved = localStorage.getItem(key);
+    if (!saved) {
+      dispatch(clearAllSessions());
+      dispatch(createSession());
+    }
+  }, [user?.id]);
+
+  // Create initial session on first load if none
   useEffect(() => {
     if (sessions.length === 0) {
       dispatch(createSession());
@@ -26,6 +41,8 @@ function AppContent() {
   const handleToggleTheme = useCallback((value) => {
     dispatch(setTheme(value));
   }, [dispatch]);
+
+  if (!user) return <AuthPage />;
 
   return (
     <div style={{
@@ -44,8 +61,8 @@ function AppContent() {
       }} />
 
       <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative', zIndex: 1 }}>
-        <Sidebar onThemeChange={handleToggleTheme} />
-        <ChatArea />
+        <Sidebar onThemeChange={handleToggleTheme} onLogout={logout} user={user} />
+        <ChatArea user={user} onLogout={logout} />
       </div>
 
       <Toaster

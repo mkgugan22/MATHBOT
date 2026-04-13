@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <meta name="theme-color" content="#0a0a1a" />
     <meta name="description" content="MathBot — AI-Powered Mathematics Doubts Clearing" />
     <title>MathBot — Mathematics Expert AI</title>
@@ -14,10 +14,12 @@
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body, #root { height: 100%; }
       body {
-        background: #050510;
-        color: #e8e8f0;
-        font-family: 'Syne', sans-serif;
-        overflow: hidden;
+        background: #050510; color: #e8e8f0;
+        font-family: 'Syne', sans-serif; overflow: hidden;
+      }
+      @media (max-width: 768px) {
+        body { overflow: auto; }
+        html, body, #root { height: 100%; min-height: 100%; }
       }
       ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
