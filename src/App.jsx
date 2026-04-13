@@ -6,7 +6,20 @@ import { createSession, setTheme, clearAllSessions } from './store/chatSlice';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import AuthPage from './components/AuthPage';
+import SharedView from './components/SharedView';
 import { useAuth } from './components/AuthContext';
+
+/**
+ * Detect share route once at module load time — stable across re-renders.
+ * A URL is a share page if the path is /share OR if ?msg= param is present.
+ */
+function getIsSharePage() {
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+  return path === '/share' || Boolean(params.get('msg'));
+}
+
+const IS_SHARE_PAGE = getIsSharePage();
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -16,7 +29,6 @@ function AppContent() {
   // Reset sessions when user changes
   useEffect(() => {
     if (!user) return;
-    // Load user-specific sessions from localStorage
     const key = `mathbot_sessions_${user.id}`;
     const saved = localStorage.getItem(key);
     if (!saved) {
@@ -42,6 +54,12 @@ function AppContent() {
     dispatch(setTheme(value));
   }, [dispatch]);
 
+  // ── Share page gate — shown to anyone, no login required ─────────────
+  if (IS_SHARE_PAGE) {
+    return <SharedView />;
+  }
+
+  // ── Auth gate ──────────────────────────────────────────────────────────
   if (!user) return <AuthPage />;
 
   return (

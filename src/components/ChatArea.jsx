@@ -6,7 +6,8 @@ import { toggleSidebar, createSession } from '../store/chatSlice';
 import MessageBubble from './MessageBubble';
 import WelcomeScreen from './WelcomeScreen';
 import ChatInput from './ChatInput';
-import { FiMenu, FiPlus, FiLogOut, FiChevronDown } from 'react-icons/fi';
+import ShareModal from './ShareModal';
+import { FiMenu, FiPlus, FiLogOut } from 'react-icons/fi';
 
 export default function ChatArea({ user, onLogout }) {
   const dispatch = useDispatch();
@@ -15,6 +16,9 @@ export default function ChatArea({ user, onLogout }) {
   const messagesEndRef = useRef(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Share modal state — null means closed, object means open with that message
+  const [shareMsg, setShareMsg] = useState(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,7 +56,6 @@ export default function ChatArea({ user, onLogout }) {
         display: 'flex', alignItems: 'center', gap: 10,
         background: 'rgba(5,5,16,0.8)', backdropFilter: 'blur(20px)', zIndex: 5, flexShrink: 0,
       }}>
-        {/* Toggle sidebar button — always visible on mobile, only when closed on desktop */}
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={() => dispatch(toggleSidebar())}
           style={{
@@ -65,7 +68,6 @@ export default function ChatArea({ user, onLogout }) {
           className={sidebarOpen ? 'hide-on-desktop' : ''}
         ><FiMenu size={18} /></motion.button>
 
-        {/* Brand — show when sidebar is closed */}
         {!sidebarOpen && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div style={{
@@ -87,7 +89,6 @@ export default function ChatArea({ user, onLogout }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          {/* Status pill - hidden on mobile */}
           <div className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: isLoading ? '#f59e0b' : '#10b981', boxShadow: isLoading ? '0 0 6px #f59e0b' : '0 0 6px #10b981', transition: 'all 0.3s' }} />
             <span style={{ fontSize: 11, color: isLoading ? '#f59e0b' : '#6a6aaa', fontFamily: "'JetBrains Mono', monospace" }}>
@@ -107,7 +108,6 @@ export default function ChatArea({ user, onLogout }) {
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(99,102,241,0.1)'}
           ><FiPlus size={14} /> <span className="hide-on-mobile">New</span></motion.button>
 
-          {/* User avatar + dropdown */}
           {user && (
             <div ref={menuRef} style={{ position: 'relative' }}>
               <button onClick={() => setUserMenuOpen(o => !o)}
@@ -170,7 +170,12 @@ export default function ChatArea({ user, onLogout }) {
           <>
             <AnimatePresence>
               {messages.map(msg => (
-                <MessageBubble key={msg.id} message={msg} sessionId={activeSession?.id} />
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  sessionId={activeSession?.id}
+                  onShare={(message) => setShareMsg(message)}
+                />
               ))}
             </AnimatePresence>
             <div ref={messagesEndRef} />
@@ -179,6 +184,14 @@ export default function ChatArea({ user, onLogout }) {
       </div>
 
       <ChatInput onSend={handleSend} isLoading={isLoading} />
+
+      {/* Share Modal — rendered here, above everything else */}
+      {shareMsg && (
+        <ShareModal
+          message={shareMsg}
+          onClose={() => setShareMsg(null)}
+        />
+      )}
 
       <style>{`
         @media (max-width: 768px) {

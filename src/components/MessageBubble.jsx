@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { copyToClipboard, generateShareLink, formatTimestamp } from '../utils/helpers';
+import { copyToClipboard, formatTimestamp } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import {
   FiCopy, FiShare2, FiCheck, FiUser,
@@ -35,7 +35,8 @@ function TypingIndicator() {
   );
 }
 
-function MessageActions({ message, sessionId }) {
+// onShare is called with the full message object so ChatArea can open the ShareModal
+function MessageActions({ message, sessionId, onShare }) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
 
@@ -46,10 +47,8 @@ function MessageActions({ message, sessionId }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleShare = async () => {
-    const link = generateShareLink(sessionId, message.id);
-    await copyToClipboard(link);
-    toast.success('Share link copied!', { icon: '🔗' });
+  const handleShare = () => {
+    if (onShare) onShare(message);
   };
 
   const handleDownload = () => {
@@ -162,7 +161,8 @@ const markdownComponents = {
   hr: () => <hr style={{ border: 'none', borderTop: '1px solid #1a1a3a', margin: '16px 0' }} />,
 };
 
-export default function MessageBubble({ message, sessionId }) {
+// onShare prop is passed down from ChatArea
+export default function MessageBubble({ message, sessionId, onShare }) {
   const isUser = message.role === 'user';
   const isLoading = message.isLoading;
 
@@ -220,7 +220,8 @@ export default function MessageBubble({ message, sessionId }) {
             >
               {message.content}
             </ReactMarkdown>
-            <MessageActions message={message} sessionId={sessionId} />
+            {/* Pass onShare down so "Share Link" button opens the modal */}
+            <MessageActions message={message} sessionId={sessionId} onShare={onShare} />
           </>
         )}
         {!isLoading && (
