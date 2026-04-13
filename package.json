@@ -2,7 +2,6 @@
   "name": "mathbot-doubts-clearing",
   "version": "1.0.0",
   "private": true,
-  "proxy": "http://localhost:3002",
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.3",
     "concurrently": "^8.2.2",
@@ -26,8 +25,7 @@
   },
   "scripts": {
     "start": "cross-env PORT=3001 react-scripts start",
-    "server": "node server.js",
-    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "dev": "netlify dev",
     "build": "react-scripts build"
   },
   "browserslist": {
